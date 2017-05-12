@@ -71,7 +71,7 @@ fun handleWebsocket() {
                     webSocket.send("-")
                     print("tick...")
                 }
-            }, 1000, 1000 * 10)
+            }, 1000, 1000 * 16)
         }
 
         override fun onMessage(webSocket: WebSocket, bytes: ByteString) = println(bytes)
