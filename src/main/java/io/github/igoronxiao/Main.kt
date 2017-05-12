@@ -1,12 +1,12 @@
 package io.github.igoronxiao
 
+import javazoom.jl.player.Player
 import okhttp3.*
 import okio.ByteString
 import java.awt.Rectangle
 import java.awt.Robot
 import java.awt.Toolkit
-import java.io.File
-import java.io.IOException
+import java.io.*
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
@@ -14,7 +14,8 @@ import javax.swing.JOptionPane.WARNING_MESSAGE
 import javax.swing.JOptionPane.showMessageDialog
 
 
-val IMG_FILE = File("D:/up/aa.png")
+val IMG_FILE = File("D:/up/cut.png")
+val MEDEA_FILE_PATH = "D:/up/media.mp3"
 //val WEBSOCKET_URL = "http://127.0.0.1/ws"
 val WEBSOCKET_URL = "http://39.108.6.47/ws"
 //val UPLOAD_URL = "http://127.0.0.1/upload"
@@ -70,7 +71,7 @@ fun handleWebsocket() {
                     webSocket.send("-")
                     print("tick...")
                 }
-            }, 1000, 1000 * 20)
+            }, 1000, 1000 * 10)
         }
 
         override fun onMessage(webSocket: WebSocket, bytes: ByteString) = println(bytes)
@@ -80,8 +81,9 @@ fun handleWebsocket() {
         override fun onMessage(webSocket: WebSocket, text: String) {
             // 0: 连接成功 1：执行命令成功 -：心跳
             if ("0" != text && "1" != text && "-" != text) {
-                showWarningMessage(text)
                 webSocket.send("1")
+                showWarningMessage(text)
+                readText(text)
             }
         }
     })
@@ -90,5 +92,19 @@ fun handleWebsocket() {
 fun showWarningMessage(msg: String?) {
     Thread {
         showMessageDialog(null, msg, "警告", WARNING_MESSAGE);
+    }.start()
+}
+
+fun readText(msg: String) {
+    Thread {
+        val client = OkHttpClient()
+        val req = Request.Builder().url("http://tts.baidu.com/text2audio?lan=zh&pid=101&ie=UTF-8&text=${msg}&spd=3").addHeader("Content-Type", "application/json").build()
+        val rep = client.newCall(req).execute()
+        val fos = FileOutputStream(MEDEA_FILE_PATH)
+        fos.write(rep.body().bytes())
+        fos.close()
+        val buffer = BufferedInputStream(FileInputStream(MEDEA_FILE_PATH));
+        val player = Player(buffer);
+        player.play();
     }.start()
 }
